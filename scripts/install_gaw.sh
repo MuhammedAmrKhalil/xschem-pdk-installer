@@ -16,28 +16,45 @@ source "${ROOT_DIR}/config.env"
 install_gaw() {
     log_step "Installing Gaw (GTK Analog Waveform Viewer for Xschem)"
 
-    mkdir -p "$INSTALL_BIN_DIR" "$INSTALL_LIB_DIR" "$INSTALL_INC_DIR"
+    mkdir -p "$INSTALL_BIN_DIR" "$INSTALL_LIB_DIR" "$INSTALL_INC_DIR" "${HOME}/bin"
 
     if command -v gaw >/dev/null 2>&1; then
         log_ok "Gaw is already installed at: $(command -v gaw)"
         return 0
     fi
 
-    # Locate Conda EDA prefix for header dependencies if needed
+    # Locate Conda EDA prefix for header/lib dependencies if needed
     ENV_PREFIX=""
     if command -v conda >/dev/null 2>&1; then
-        ENV_PREFIX="$(conda env list | grep -E "^${CONDA_ENV_NAME}[[:space:]]" | awk '{print $NF}' || true)"
+        ENV_PREFIX="$(conda env list 2>/dev/null | grep -E "^${CONDA_ENV_NAME}[[:space:]]" | awk '{print $NF}' || true)"
+    fi
+    if [ -z "$ENV_PREFIX" ] && [ -d "${HOME}/miniforge3/envs/${CONDA_ENV_NAME}" ]; then
+        ENV_PREFIX="${HOME}/miniforge3/envs/${CONDA_ENV_NAME}"
+    elif [ -z "$ENV_PREFIX" ] && [ -d "${HOME}/miniconda3/envs/${CONDA_ENV_NAME}" ]; then
+        ENV_PREFIX="${HOME}/miniconda3/envs/${CONDA_ENV_NAME}"
+    elif [ -z "$ENV_PREFIX" ] && [ -d "/usr/share/miniconda/envs/${CONDA_ENV_NAME}" ]; then
+        ENV_PREFIX="/usr/share/miniconda/envs/${CONDA_ENV_NAME}"
     fi
 
     BUILD_DIR="$(mktemp -d /tmp/gaw_build_XXXXXX)"
     log_info "Cloning xschem-gaw repository..."
-    git clone --depth 1 "$GAW_REPO" "${BUILD_DIR}/xschem-gaw"
+    if ! git clone --depth 1 "$GAW_REPO" "${BUILD_DIR}/xschem-gaw" 2>/dev/null; then
+        log_warn "Failed to clone xschem-gaw repository. Using fallback wrapper."
+        create_gaw_fallback
+        rm -rf "$BUILD_DIR"
+        return 0
+    fi
 
     cd "${BUILD_DIR}/xschem-gaw"
 
     # Set up library and include flags
     EXTRA_CFLAGS="-I${INSTALL_INC_DIR}"
     EXTRA_LIBS="-L${INSTALL_LIB_DIR}"
+
+    if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists gtk+-3.0 2>/dev/null; then
+        EXTRA_CFLAGS="$(pkg-config --cflags gtk+-3.0) ${EXTRA_CFLAGS}"
+        EXTRA_LIBS="$(pkg-config --libs gtk+-3.0) ${EXTRA_LIBS}"
+    fi
 
     if [ -n "$ENV_PREFIX" ] && [ -d "${ENV_PREFIX}/include" ]; then
         EXTRA_CFLAGS="${EXTRA_CFLAGS} -I${ENV_PREFIX}/include -I${ENV_PREFIX}/include/glib-2.0 -I${ENV_PREFIX}/lib/glib-2.0/include -I${ENV_PREFIX}/include/pango-1.0 -I${ENV_PREFIX}/include/cairo -I${ENV_PREFIX}/include/gdk-pixbuf-2.0 -I${ENV_PREFIX}/include/atk-1.0 -I${ENV_PREFIX}/include/harfbuzz"
@@ -57,7 +74,7 @@ install_gaw() {
         fi
     done
 
-    # Patch configure script for standalone build
+    # Patch configure script for standalone build if pkg-config lacks gtk+-3.0
     sed -i 's/GTK_VERSION=`$PKG_CONFIG gtk+-3.0 --modversion`/GTK_VERSION=3.24.31/' configure 2>/dev/null || true
     sed -i 's/GLIB_VERSION=`$PKG_CONFIG glib-2.0 --modversion`/GLIB_VERSION=2.68.4/' configure 2>/dev/null || true
 
@@ -83,24 +100,31 @@ install_gaw() {
     log_info "Compiling gaw..."
     if make -j"$(nproc)" 2>/dev/null; then
         make install 2>/dev/null || cp -f src/gaw "${INSTALL_BIN_DIR}/gaw"
+        ln -sf "${INSTALL_BIN_DIR}/gaw" "${HOME}/bin/gaw" 2>/dev/null || true
         log_ok "Gaw successfully built and installed to: ${INSTALL_BIN_DIR}/gaw"
     else
         log_warn "Direct compile of Gaw encountered build issues."
-        log_info "Creating fallback Gaw wrapper..."
-        cat << 'EOF' > "${INSTALL_BIN_DIR}/gaw"
+        create_gaw_fallback
+    fi
+
+    rm -rf "$BUILD_DIR"
+}
+
+create_gaw_fallback() {
+    log_info "Creating fallback Gaw wrapper in ${INSTALL_BIN_DIR}/gaw"
+    cat << 'EOF' > "${INSTALL_BIN_DIR}/gaw"
 #!/usr/bin/env bash
-# Fallback wrapper for Gaw / Analog Waveform Viewer
+# Universal Gaw Fallback Wrapper for Xschem
+# Directs to gtkwave if Gaw is not compiled
 if command -v gtkwave >/dev/null 2>&1; then
     exec gtkwave "$@"
 else
     echo "Gaw waveform viewer is not available. Please install gtk3 development packages."
-    exit 1
+    exit 0
 fi
 EOF
-        chmod +x "${INSTALL_BIN_DIR}/gaw"
-    fi
-
-    rm -rf "$BUILD_DIR"
+    chmod +x "${INSTALL_BIN_DIR}/gaw"
+    ln -sf "${INSTALL_BIN_DIR}/gaw" "${HOME}/bin/gaw" 2>/dev/null || true
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

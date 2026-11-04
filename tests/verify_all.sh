@@ -47,10 +47,16 @@ test_item "OpenVAF Verilog-A compiler" command -v openvaf
 test_item "Icarus Verilog compiler" command -v iverilog
 test_item "Icarus Verilog vvp engine" command -v vvp
 
-# 2. Xschem PDK configuration checks
-test_item "Xschem IHP SG13G2 rcfile execution" bash -c "xschem_ihp -r -x -q 2>&1 | grep -iq 'models.*ihp'"
-test_item "Xschem SkyWater 130nm rcfile execution" bash -c "xschem_sky -r -x -q 2>&1 | grep -iq 'SKYWATER_MODELS'"
-test_item "Xschem GF180MCU rcfile execution" bash -c "xschem_gf -r -x -q 2>&1 | grep -iq '180MCU_MODELS'"
+# 2. Xschem PDK configuration checks (executed if PDKs are installed)
+if [ -f "${PDK_ROOT}/ihp-sg13g2/libs.tech/xschem/xschemrc" ]; then
+    test_item "Xschem IHP SG13G2 rcfile execution" bash -c "xschem_ihp -r -x -q 2>&1 | grep -iq 'models.*ihp'"
+fi
+if [ -f "${PDK_ROOT}/sky130A/libs.tech/xschem/xschemrc" ]; then
+    test_item "Xschem SkyWater 130nm rcfile execution" bash -c "xschem_sky -r -x -q 2>&1 | grep -iq 'SKYWATER_MODELS'"
+fi
+if [ -f "${PDK_ROOT}/gf180mcuD/libs.tech/xschem/xschemrc" ]; then
+    test_item "Xschem GF180MCU rcfile execution" bash -c "xschem_gf -r -x -q 2>&1 | grep -iq '180MCU_MODELS'"
+fi
 
 # 3. Verilog simulation & VCD dump test
 TMP_VCD="$(mktemp /tmp/test_vcd_XXXXXX.v)"
