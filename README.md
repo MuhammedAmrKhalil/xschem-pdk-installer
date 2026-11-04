@@ -1,11 +1,6 @@
 # Xschem EDA Suite & Open Source PDKs Installer
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Linux](https://img.shields.io/badge/Platform-Linux%20(x86__64%20%7C%20aarch64)-orange.svg)](#supported-distributions)
-[![PDK: IHP SG13G2](https://img.shields.io/badge/PDK-IHP%20SG13G2%20(0.13µm)-purple.svg)](#supported-pdks)
-[![PDK: Sky130](https://img.shields.io/badge/PDK-SkyWater%20130nm-blue.svg)](#supported-pdks)
-[![PDK: GF180MCU](https://img.shields.io/badge/PDK-GlobalFoundries%20180nm-red.svg)](#supported-pdks)
-[![Simulator: Ngspice](https://img.shields.io/badge/Simulator-Ngspice%20v46%20(OSDI%2BKLU)-green.svg)](#included-eda-tools)
+
 
 An automated, cross-distribution installer that provisions a complete, production-ready **Xschem** analog, mixed-signal, and RF integrated circuit design environment with unified open-source PDKs, simulation engines, Verilog-A compilation, and waveform viewers.
 
