@@ -1,0 +1,30 @@
+# Build and temporary files
+*.o
+*.a
+*.so
+*.osdi
+*.raw
+*.vcd
+*.vvp
+*.log
+*.tmp
+*~
+
+# Conda & Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+.conda/
+miniconda3/
+miniforge3/
+
+# Download archives
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rpm
+*.deb
+
+# Test output artifacts
+/tmp/
+verify_test.*

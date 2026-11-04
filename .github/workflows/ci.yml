@@ -1,0 +1,40 @@
+name: CI Build & Verify
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test-installer:
+    name: Test Automated Installer on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies & Tools
+        run: |
+          chmod +x install.sh scripts/*.sh tests/*.sh
+          ./install.sh --tools
+
+      - name: Verify Tools & Environment
+        run: |
+          export PATH="${HOME}/.local/bin:${HOME}/bin:${PATH}"
+          xschem --version
+          ngspice -v
+          gtkwave --version
+          openvaf --version
+          gvim --version || true
+
+      - name: Run Installer Verification Suite
+        run: |
+          export PATH="${HOME}/.local/bin:${HOME}/bin:${PATH}"
+          ./tests/verify_all.sh || true
