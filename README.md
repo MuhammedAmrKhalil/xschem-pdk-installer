@@ -26,9 +26,9 @@ An automated, cross-distribution installer that provisions a complete, productio
 | :--- | :--- | :--- | :--- |
 | **Debian / Ubuntu** | Ubuntu 20.04/22.04/24.04, Debian 11/12 | `apt` | Supported |
 | **RHEL / Fedora** | Rocky Linux 8/9, RHEL 8/9, AlmaLinux, Fedora 39/40 | `dnf` / `yum` | Supported |
-| **Arch Linux** | Arch Linux, Manjaro, EndeavourOS | `pacman` | Supported |
-| **openSUSE** | Leap 15.x, Tumbleweed | `zypper` | Supported |
-| **Alpine Linux** | Alpine v3.18+ | `apk` | Supported |
+| **Arch Linux** | Arch Linux, Manjaro, EndeavourOS | `pacman` | In Progress |
+| **openSUSE** | Leap 15.x, Tumbleweed | `zypper` | In Progress |
+| **Alpine Linux** | Alpine v3.18+ | `apk` | In Progress |
 
 ---
 
